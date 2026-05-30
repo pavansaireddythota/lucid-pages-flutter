@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "942347597985",
+    "project_id": "e-native-book",
+    "storage_bucket": "e-native-book.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942347597985:android:ec37f989ee9e8e7d5f58e0",
+        "android_client_info": {
+          "package_name": "com.example.lucidpages"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "942347597985-rt4ekhq2id5f3eouefelvl8eq2oirj45.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApoItO1ob8Sc4F7Df-KL62UKTnZRbrG-8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "942347597985-rt4ekhq2id5f3eouefelvl8eq2oirj45.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "942347597985-59f3kdhspmf3gh909bchsa0vltt1irdl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.lucidpages"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

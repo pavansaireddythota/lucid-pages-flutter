@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io'
+    as io; // Prefixed dart:io so it doesn't conflict or break on web platforms
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +23,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
   bool loading = false;
   String visibility = 'private'; // Root overall book level visibility
-  File? coverImageFile;
+
+  // FIXED: Changed from io.File? to XFile? for Web compatibility
+  XFile? coverImageFile;
   String coverImageBase64 = '';
   String userId = '';
   List<EpisodeModel> episodes = [];
@@ -31,7 +34,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
   void initState() {
     super.initState();
     loadUser();
-    addEpisode(); 
+    addEpisode();
   }
 
   @override
@@ -68,16 +71,19 @@ class _AddBookScreenState extends State<AddBookScreen> {
       );
 
       if (image == null) return;
-      final file = File(image.path);
 
-      final int fileSizeInBytes = file.lengthSync();
+      // FIXED: Used web-compatible async .length() method instead of native .lengthSync()
+      final int fileSizeInBytes = await image.length();
       final double fileSizeInKB = fileSizeInBytes / 1024;
       if (fileSizeInKB > 800) {
-        showError('Image is too large (Max: 800KB). Please choose a smaller file.');
+        showError(
+          'Image is too large (Max: 800KB). Please choose a smaller file.',
+        );
         return;
       }
 
-      final bytes = await file.readAsBytes();
+      // FIXED: Read bytes cross-platform via XFile directly
+      final bytes = await image.readAsBytes();
       final base64String = base64Encode(bytes);
 
       String extension = image.path.split('.').last.toLowerCase();
@@ -86,7 +92,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
       }
 
       setState(() {
-        coverImageFile = file;
+        coverImageFile = image; // Stored safely as XFile
         coverImageBase64 = 'data:image/$extension;base64,$base64String';
       });
     } catch (e) {
@@ -112,9 +118,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 
   void showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> saveBook() async {
@@ -123,9 +129,12 @@ class _AddBookScreenState extends State<AddBookScreen> {
       return;
     }
 
-    if (titleController.text.trim().isEmpty) return showError('Enter Book Title');
-    if (authorController.text.trim().isEmpty) return showError('Enter Author Name');
-    if (descriptionController.text.trim().isEmpty) return showError('Enter Description');
+    if (titleController.text.trim().isEmpty)
+      return showError('Enter Book Title');
+    if (authorController.text.trim().isEmpty)
+      return showError('Enter Author Name');
+    if (descriptionController.text.trim().isEmpty)
+      return showError('Enter Description');
     if (coverImageBase64.isEmpty) return showError('Select Cover Image');
     if (episodes.isEmpty) return showError('Add At Least One Episode');
 
@@ -137,7 +146,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
       final bookRef = FirebaseFirestore.instance.collection('books').doc();
       final List<Map<String, dynamic>> episodeList = [];
       final currentAuthorName = authorController.text.trim();
-      
+
       final Set<String> seenTitles = {};
 
       for (int i = 0; i < episodes.length; i++) {
@@ -150,28 +159,40 @@ class _AddBookScreenState extends State<AddBookScreen> {
           throw Exception('Validation failed: Missing episode title');
         }
 
-        if (currentEpDesc.isEmpty) {
-          showError('Episode ${i + 1} description required');
-          throw Exception('Validation failed: Missing episode description');
-        }
+        // FIXED: Check if BOTH the description field and the Quill editor are empty
+        final bool isQuillEmpty =
+            episode.quillController.document.isEmpty() ||
+            episode.quillController.document.length <= 1;
 
-        if (seenTitles.contains(currentEpTitle.toLowerCase())) {
-          showError('Episode title "$currentEpTitle" is used multiple times. Please use unique titles.');
-          throw Exception('Validation failed: Duplicate episode title detected');
-        }
-        seenTitles.add(currentEpTitle.toLowerCase());
-
-        final plainText = episode.quillController.document.toPlainText().trim();
-        if (plainText.isEmpty) {
-          showError('Episode ${i + 1} content cannot be empty');
+        if (currentEpDesc.isEmpty && isQuillEmpty) {
+          showError('Episode ${i + 1} content or description summary required');
           throw Exception('Validation failed: Missing episode content');
         }
 
-        final delta = episode.quillController.document.toDelta();
-        final converter = QuillDeltaToHtmlConverter(
-          List<Map<String, dynamic>>.from(delta.toJson()),
-        );
-        final html = converter.convert();
+        if (seenTitles.contains(currentEpTitle.toLowerCase())) {
+          showError(
+            'Episode title "$currentEpTitle" is used multiple times. Please use unique titles.',
+          );
+          throw Exception(
+            'Validation failed: Duplicate episode title detected',
+          );
+        }
+        seenTitles.add(currentEpTitle.toLowerCase());
+
+        // FIXED: Smart Content Generation Strategy
+        // If they typed their main text inside the description field but left Quill empty,
+        // we convert the description text to HTML paragraphs so your reader view doesn't break.
+        String html = '';
+        if (!isQuillEmpty) {
+          final delta = episode.quillController.document.toDelta();
+          final converter = QuillDeltaToHtmlConverter(
+            List<Map<String, dynamic>>.from(delta.toJson()),
+          );
+          html = converter.convert();
+        } else {
+          // Convert plaintext formatting into basic HTML paragraphs
+          html = currentEpDesc.split('\n').map((p) => '<p>$p</p>').join();
+        }
 
         episodeList.add({
           'id': i + 1,
@@ -179,8 +200,10 @@ class _AddBookScreenState extends State<AddBookScreen> {
           'authorId': userId,
           'authorName': currentAuthorName,
           'title': currentEpTitle,
-          'description': currentEpDesc,
-          'visibility': episode.visibility, // New Episode-level security data
+          'description': currentEpDesc.length > 100
+              ? '${currentEpDesc.substring(0, 97)}...'
+              : currentEpDesc, // Keeps the actual index summary clean
+          'visibility': episode.visibility,
           'content': html,
         });
       }
@@ -192,10 +215,10 @@ class _AddBookScreenState extends State<AddBookScreen> {
         'description': descriptionController.text.trim(),
         'coverImageUrl': coverImageBase64,
         'visibility': visibility,
-        'createdAt': FieldValue.serverTimestamp(), 
+        'createdAt': FieldValue.serverTimestamp(),
         'authorId': userId,
         'episodes': episodeList,
-        'episodeCount': episodeList.length, 
+        'episodeCount': episodeList.length,
       };
 
       await bookRef.set(bookData);
@@ -205,7 +228,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
         const SnackBar(content: Text('Book Created Successfully')),
       );
       Navigator.pop(context);
-
     } catch (e) {
       debugPrint('SAVE BOOK ERROR: $e');
       if (!e.toString().contains('Validation failed')) {
@@ -251,18 +273,20 @@ class _AddBookScreenState extends State<AddBookScreen> {
                 ),
                 const SizedBox(height: 15),
 
-                // 2. NEW: Episode Description Field
+                // 2. Episode Content Field (Accepts unlimited long-form text entry)
                 TextField(
                   controller: episode.descriptionController,
-                  maxLines: 2,
+                  maxLines:
+                      null, // FIXED: Setting to null allows it to auto-expand vertically with no size limits
+                  keyboardType: TextInputType.multiline,
                   decoration: const InputDecoration(
-                    labelText: 'Episode Description Summary',
+                    labelText: 'Episode Content / Description Text',
                     border: OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 15),
 
-                // 3. NEW: Episode-Specific Status Dropdown Selection UI
+                // 3. Episode-Specific Status Dropdown Selection UI
                 DropdownButtonFormField<String>(
                   value: episode.visibility,
                   decoration: const InputDecoration(
@@ -270,8 +294,14 @@ class _AddBookScreenState extends State<AddBookScreen> {
                     border: OutlineInputBorder(),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'public', child: Text('Public (Available to readers)')),
-                    DropdownMenuItem(value: 'private', child: Text('Private (Draft Mode)')),
+                    DropdownMenuItem(
+                      value: 'public',
+                      child: Text('Public (Available to readers)'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'private',
+                      child: Text('Private (Draft Mode)'),
+                    ),
                   ],
                   onChanged: (value) {
                     setState(() {
@@ -280,9 +310,10 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   },
                 ),
                 const SizedBox(height: 15),
-                
+
+                // Rich Text Section (Optional Backup Component)
                 Container(
-                  height: 300,
+                  height: 200,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                   ),
@@ -295,9 +326,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
                       Expanded(
                         child: QuillEditor.basic(
                           controller: episode.quillController,
-                          config: const QuillEditorConfig(
-                            scrollable: true,
-                          ),
+                          config: const QuillEditorConfig(scrollable: true),
                         ),
                       ),
                     ],
@@ -307,7 +336,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
                     onPressed: () => removeEpisode(index),
                     icon: const Icon(Icons.delete, color: Colors.white),
                     label: const Text(
@@ -386,9 +417,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
                 ),
                 child: Column(
                   children: [
-                    if (coverImageFile != null)
-                      Image.file(
-                        coverImageFile!,
+                    if (coverImageFile != null && coverImageBase64.isNotEmpty)
+                      Image.memory(
+                        base64Decode(coverImageBase64.split(',').last),
                         height: 220,
                         fit: BoxFit.contain,
                       )
@@ -441,17 +472,17 @@ class _AddBookScreenState extends State<AddBookScreen> {
   }
 }
 
-// Updated data holder pattern
+// Data holder pattern
 class EpisodeModel {
   final titleController = TextEditingController();
-  final descriptionController = TextEditingController(); // Added description storage tracking map
-  String visibility = 'private';                        // Added tracking default initial dropdown state mapping
+  final descriptionController = TextEditingController();
+  String visibility = 'private';
   final quillController = QuillController.basic();
   bool expanded = true;
 
   void dispose() {
     titleController.dispose();
-    descriptionController.dispose(); // Housekeeping cleanup to prevent memory leaks
+    descriptionController.dispose();
     quillController.dispose();
   }
 }

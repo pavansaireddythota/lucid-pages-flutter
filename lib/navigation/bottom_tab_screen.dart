@@ -13,19 +13,15 @@ class BottomTabScreen extends StatefulWidget {
   });
 
   @override
-  State<BottomTabScreen> createState() =>
-      _BottomTabScreenState();
+  State<BottomTabScreen> createState() => _BottomTabScreenState();
 }
 
-class _BottomTabScreenState
-    extends State<BottomTabScreen> {
+class _BottomTabScreenState extends State<BottomTabScreen> {
   int currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final isAuthor =
-        widget.role.toLowerCase() ==
-        'author';
+    final isAuthor = widget.role.toLowerCase() == 'author';
 
     final screens = isAuthor
         ? [
@@ -40,46 +36,35 @@ class _BottomTabScreenState
 
     return Scaffold(
       body: screens[currentIndex],
-
-      bottomNavigationBar:
-          BottomNavigationBar(
+      bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
-
         onTap: (index) {
           setState(() {
             currentIndex = index;
           });
         },
-
         items: isAuthor
             ? const [
                 BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.dashboard,
-                  ),
+                  icon: Icon(Icons.dashboard),
                   label: 'Dashboard',
                 ),
                 BottomNavigationBarItem(
-                  icon: Icon(
-                    Icons.person,
-                  ),
+                  icon: Icon(Icons.person),
                   label: 'Profile',
                 ),
               ]
             : const [
                 BottomNavigationBarItem(
-                  icon:
-                      Icon(Icons.home),
+                  icon: Icon(Icons.home),
                   label: 'Home',
                 ),
                 BottomNavigationBarItem(
-                  icon:
-                      Icon(Icons.menu_book),
+                  icon: Icon(Icons.menu_book),
                   label: 'Library',
                 ),
                 BottomNavigationBarItem(
-                  icon:
-                      Icon(Icons.person),
+                  icon: Icon(Icons.person),
                   label: 'Profile',
                 ),
               ],

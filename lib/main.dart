@@ -1,12 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-// Added localization delegates for standard widgets and Cupertino styles
 import 'package:flutter_localizations/flutter_localizations.dart';
-// Added the localization delegate required by flutter_quill UI tools
 import 'package:flutter_quill/flutter_quill.dart';
 
 import 'firebase_options.dart';
 import 'navigation/app_navigator.dart';
+
+// Import supplemental utility screens
+import './screens/profile/edit_profile_screen.dart';
+import './screens/feedback/feedback_screen.dart';
+import './screens/about_us/about_us_screen.dart';
+import './screens/privacy_policy/privacy_policy_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +46,14 @@ class LucidPagesApp extends StatelessWidget {
       ],
 
       home: const AppNavigator(),
+      
+      // Global app routes accessible from any screen context
+      routes: {
+        '/edit-profile': (context) => const EditProfileScreen(),
+        '/feedback': (context) => const FeedbackScreen(),
+        '/about-us': (context) => const AboutUsScreen(),
+        '/privacy-policy': (context) => const PrivacyPolicyScreen(),
+      },
     );
   }
 }

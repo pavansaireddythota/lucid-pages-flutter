@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import '../../services/reading_service.dart';
 
 class ReaderScreen extends StatefulWidget {
   final Map<String, dynamic> book;
@@ -18,10 +19,33 @@ class ReaderScreen extends StatefulWidget {
 class _ReaderScreenState extends State<ReaderScreen> {
   late int currentEpisodeIndex;
 
+  Future<void> saveReadingProgress() async {
+    final episodes = widget.book['episodes'] as List;
+
+    try {
+      await ReadingService.saveProgress(
+        book: widget.book,
+        currentChapter: currentEpisodeIndex,
+        totalChapters: episodes.length,
+      );
+
+      debugPrint(
+        "Progress saved: ${widget.book['title']} chapter $currentEpisodeIndex",
+      );
+    } catch (e) {
+      debugPrint("Save progress error: $e");
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+
     currentEpisodeIndex = widget.episodeIndex;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      saveReadingProgress();
+    });
   }
 
   @override
@@ -51,7 +75,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF222222)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF222222),
+                    ),
                     onPressed: () {
                       Navigator.pop(context);
                     },
@@ -97,12 +124,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       fontSize: FontSize(16),
                       lineHeight: const LineHeight(1.6),
                     ),
-                    "b": Style(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    "i": Style(
-                      fontStyle: FontStyle.italic,
-                    ),
+                    "b": Style(fontWeight: FontWeight.bold),
+                    "i": Style(fontStyle: FontStyle.italic),
                   },
                 ),
               ),
@@ -127,10 +150,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     child: ElevatedButton(
                       onPressed: currentEpisodeIndex == 0
                           ? null
-                          : () {
+                          : () async {
                               setState(() {
                                 currentEpisodeIndex--;
                               });
+
+                              await saveReadingProgress();
                             },
                       child: const Text('← Prev'),
                     ),
@@ -142,10 +167,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     child: ElevatedButton(
                       onPressed: currentEpisodeIndex == episodes.length - 1
                           ? null
-                          : () {
+                          : () async {
                               setState(() {
                                 currentEpisodeIndex++;
                               });
+
+                              await saveReadingProgress();
                             },
                       child: const Text('Next →'),
                     ),

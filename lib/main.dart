@@ -15,9 +15,7 @@ import './screens/privacy_policy/privacy_policy_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   runApp(const LucidPagesApp());
 }
@@ -30,23 +28,22 @@ class LucidPagesApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Lucid Pages',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
 
       // Fixes the MissingFlutterQuillLocalizationException runtime error
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
-        FlutterQuillLocalizations.delegate, // Injects internal quill asset strings
+        FlutterQuillLocalizations
+            .delegate, // Injects internal quill asset strings
       ],
       supportedLocales: const [
         Locale('en', 'US'), // Sets English as default locale target
       ],
 
       home: const AppNavigator(),
-      
+
       // Global app routes accessible from any screen context
       routes: {
         '/edit-profile': (context) => const EditProfileScreen(),

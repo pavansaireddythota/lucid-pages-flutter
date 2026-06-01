@@ -19,7 +19,7 @@ class AboutUsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 10),
-            
+
             // App Branding Section optimized for image icons
             Container(
               width: 100,
@@ -32,13 +32,13 @@ class AboutUsScreen extends StatelessWidget {
                     color: Color(0x10000000),
                     blurRadius: 12,
                     offset: Offset(0, 4),
-                  )
+                  ),
                 ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(22),
                 child: Image.asset(
-                  'assets/icons/app_icon.jpeg',
+                  'assets/images/logo.png',
                   width: 100,
                   height: 100,
                   fit: BoxFit.cover,
@@ -56,10 +56,7 @@ class AboutUsScreen extends StatelessWidget {
             ),
             const Text(
               'Version 1.0.0',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF64748B),
-              ),
+              style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 32),
 
@@ -116,7 +113,7 @@ class AboutUsScreen extends StatelessWidget {
             color: Color(0x05000000),
             blurRadius: 10,
             offset: Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Column(

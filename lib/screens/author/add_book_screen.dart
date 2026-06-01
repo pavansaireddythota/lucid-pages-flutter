@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io'
+    as io; // Prefixed dart:io so it doesn't conflict or break on web platforms
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';

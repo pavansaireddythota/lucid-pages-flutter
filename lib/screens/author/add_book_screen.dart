@@ -129,12 +129,15 @@ class _AddBookScreenState extends State<AddBookScreen> {
       return;
     }
 
-    if (titleController.text.trim().isEmpty)
+    if (titleController.text.trim().isEmpty) {
       return showError('Enter Book Title');
-    if (authorController.text.trim().isEmpty)
+    }
+    if (authorController.text.trim().isEmpty) {
       return showError('Enter Author Name');
-    if (descriptionController.text.trim().isEmpty)
+    }
+    if (descriptionController.text.trim().isEmpty) {
       return showError('Enter Description');
+    }
     if (coverImageBase64.isEmpty) return showError('Select Cover Image');
     if (episodes.isEmpty) return showError('Add At Least One Episode');
 
@@ -288,7 +291,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
                 // 3. Episode-Specific Status Dropdown Selection UI
                 DropdownButtonFormField<String>(
-                  value: episode.visibility,
+                  initialValue: episode.visibility,
                   decoration: const InputDecoration(
                     labelText: 'Episode Access Visibility',
                     border: OutlineInputBorder(),
@@ -390,7 +393,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
             ),
             const SizedBox(height: 15),
             DropdownButtonFormField<String>(
-              value: visibility,
+              initialValue: visibility,
               decoration: const InputDecoration(
                 labelText: 'Global Book Visibility',
                 border: OutlineInputBorder(),

@@ -233,7 +233,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: 32),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedCategory,
+                    initialValue: _selectedCategory,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,

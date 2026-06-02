@@ -28,7 +28,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
   bool isSaving = false;
 
   List<Map<String, dynamic>> localEpisodes = [];
-  List<quill.QuillController> _quillControllers = [];
+  final List<quill.QuillController> _quillControllers = [];
 
   @override
   void initState() {
@@ -331,7 +331,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<String>(
-                  value: _visibility,
+                  initialValue: _visibility,
                   decoration: const InputDecoration(labelText: 'Distribution Access Level', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'public', child: Text('Public (Visible to all users)')),
@@ -439,7 +439,7 @@ class _EditBookScreenState extends State<EditBookScreen> {
 
             // 3. NEW: Dropdown Input Block Selecting Episode Scope Status Specifier
             DropdownButtonFormField<String>(
-              value: runningVisibility,
+              initialValue: runningVisibility,
               decoration: const InputDecoration(labelText: 'Episode Distribution Tier', border: UnderlineInputBorder()),
               items: const [
                 DropdownMenuItem(value: 'public', child: Text('Public (Available to readers)')),

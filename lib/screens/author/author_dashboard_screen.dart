@@ -133,7 +133,7 @@ class _AuthorDashboardScreenState extends State<AuthorDashboardScreen> {
                       height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildFallbackCoverImage(),
+                      errorBuilder: (_, _, _) => _buildFallbackCoverImage(),
                     );
                   } catch (e) {
                     return _buildFallbackCoverImage();
@@ -171,7 +171,7 @@ class _AuthorDashboardScreenState extends State<AuthorDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -184,8 +184,8 @@ class _AuthorDashboardScreenState extends State<AuthorDashboardScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: visibility == 'public'
-                            ? Colors.green.withOpacity(.1)
-                            : Colors.orange.withOpacity(.1),
+                            ? Colors.green.withValues(alpha: .1)
+                            : Colors.orange.withValues(alpha: .1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(

@@ -90,38 +90,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget statItem(IconData icon, String value, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: .05), blurRadius: 10),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 28),
-
-            const SizedBox(height: 8),
-
-            Text(
-              value,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: .05), blurRadius: 10),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: AppColors.primary, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
             ),
-
-            const SizedBox(height: 4),
-
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -141,7 +136,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final data = snapshot.data!.docs.first.data() as Map<String, dynamic>;
-
         final progress = (data['progress'] ?? 0).toDouble();
 
         return GestureDetector(
@@ -193,9 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
                 Text(
                   data['title'] ?? '',
                   style: const TextStyle(
@@ -204,23 +196,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 6),
-
                 Text(
                   data['author'] ?? '',
                   style: const TextStyle(color: Colors.white70),
                 ),
-
                 const SizedBox(height: 16),
-
                 Text(
                   "Chapter ${(data['lastChapter'] ?? 0) + 1}",
                   style: const TextStyle(color: Colors.white),
                 ),
-
                 const SizedBox(height: 12),
-
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: LinearProgressIndicator(
@@ -229,9 +215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     backgroundColor: Colors.white24,
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 Row(
                   children: [
                     Text(
@@ -276,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget buildAnalyticsCard() {
+  Widget buildAnalyticsCard(bool isWeb) {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('Users')
@@ -290,11 +274,8 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
-
         final chapters = data['chaptersRead'] ?? 0;
-
         final books = data['booksRead'] ?? 0;
-
         final streak = data['streak'] ?? 0;
 
         return Container(
@@ -322,38 +303,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.primary,
                 ),
               ),
-
               const SizedBox(height: 4),
-
               const Text(
                 "Track your reading progress",
                 style: TextStyle(color: AppColors.textSecondary),
               ),
-
               const SizedBox(height: 20),
 
-              Row(
+              // We replace stacked Rows with a responsive Grid layout for stats
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: isWeb ? 4 : 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: isWeb ? 1.4 : 1.1,
                 children: [
                   statItem(Icons.menu_book, chapters.toString(), "Chapters"),
-
-                  const SizedBox(width: 12),
-
                   statItem(Icons.library_books, books.toString(), "Books"),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
                   statItem(
                     Icons.local_fire_department,
                     streak.toString(),
                     "Streak",
                   ),
-
-                  const SizedBox(width: 12),
-
                   statItem(Icons.auto_stories, "Reader", "Level"),
                 ],
               ),
@@ -366,364 +338,372 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final bool isWeb = screenWidth > 600;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('books')
-              .where('visibility', isEqualTo: 'public')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.hasError) {
-              return const Center(
-                child: Text('Something went wrong loading stories.'),
-              );
-            }
+        child: Center(
+          child: ConstrainedBox(
+            // Limits maximum content layout spread on large viewports
+            constraints: const BoxConstraints(maxWidth: 1200),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('books')
+                  .where('visibility', isEqualTo: 'public')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Something went wrong loading stories.'),
+                  );
+                }
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            final docs = snapshot.data?.docs ?? [];
+                final docs = snapshot.data?.docs ?? [];
 
-            final filteredDocs = docs.where((doc) {
-              final book = doc.data() as Map<String, dynamic>;
+                final filteredDocs = docs.where((doc) {
+                  final book = doc.data() as Map<String, dynamic>;
+                  final title = (book['title'] ?? '').toString().toLowerCase();
+                  final author = (book['author'] ?? '')
+                      .toString()
+                      .toLowerCase();
 
-              final title = (book['title'] ?? '').toString().toLowerCase();
+                  return title.contains(searchQuery.toLowerCase()) ||
+                      author.contains(searchQuery.toLowerCase());
+                }).toList();
 
-              final author = (book['author'] ?? '').toString().toLowerCase();
-
-              return title.contains(searchQuery.toLowerCase()) ||
-                  author.contains(searchQuery.toLowerCase());
-            }).toList();
-
-            return CustomScrollView(
-              slivers: [
-                /// HEADER
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
+                return CustomScrollView(
+                  slivers: [
+                    /// HEADER
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Text(
-                                    'Welcome Back 👋',
-                                    style: TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    'Discover your next story',
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                             Row(
                               children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.history,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const HistoryScreen(),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: const [
+                                      Text(
+                                        'Welcome Back 👋',
+                                        style: TextStyle(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.primary,
                                         ),
-                                      );
-                                    },
+                                      ),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        'Discover your next story',
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-
-                                const SizedBox(width: 10),
-
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: IconButton(
-                                    icon: const Icon(
-                                      Icons.bookmarks,
-                                      color: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => const LibraryScreen(),
+                                Row(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.history,
+                                          color: Colors.white,
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        /// SEARCH
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: .05),
-                                blurRadius: 15,
-                              ),
-                            ],
-                          ),
-                          child: TextField(
-                            controller: searchController,
-                            onChanged: (value) {
-                              setState(() {
-                                searchQuery = value;
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              hintText: 'Search stories...',
-                              prefixIcon: Icon(Icons.search),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 28),
-
-                        buildContinueReading(),
-
-                        const SizedBox(height: 20),
-
-                        buildAnalyticsCard(),
-
-                        const SizedBox(height: 24),
-
-                        const Text(
-                          '🔥 Public Stories',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
-
-                /// BOOK GRID
-                filteredDocs.isEmpty
-                    ? const SliverFillRemaining(
-                        child: Center(child: Text('No stories found')),
-                      )
-                    : SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        sliver: SliverGrid(
-                          delegate: SliverChildBuilderDelegate((
-                            context,
-                            index,
-                          ) {
-                            final doc = filteredDocs[index];
-
-                            final book = doc.data() as Map<String, dynamic>;
-
-                            book['id'] = doc.id;
-
-                            final episodes = book['episodes'] as List? ?? [];
-
-                            return GestureDetector(
-                              onTap: () {
-                                if (episodes.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'This book does not have any chapters yet.',
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const HistoryScreen(),
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
-                                  );
-                                  return;
-                                }
-
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ChapterScreen(book: book),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: .05),
-                                      blurRadius: 15,
+                                    const SizedBox(width: 10),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary,
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          Icons.bookmarks,
+                                          color: Colors.white,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LibraryScreen(),
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 180,
-                                      child: Stack(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius:
-                                                const BorderRadius.vertical(
-                                                  top: Radius.circular(20),
-                                                ),
-                                            child: Container(
-                                              width: double.infinity,
-                                              color: Colors.grey.shade100,
-                                              child: Center(
-                                                child: _buildCoverImage(
-                                                  book['coverImageUrl'],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
 
-                                          Positioned(
-                                            top: 10,
-                                            right: 10,
-                                            child: FutureBuilder<bool>(
-                                              future:
-                                                  LibraryService.isBookSaved(
-                                                    book['id'],
-                                                  ),
-                                              builder: (context, snapshot) {
-                                                final isSaved =
-                                                    snapshot.data ?? false;
+                            /// SEARCH
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: .05),
+                                    blurRadius: 15,
+                                  ),
+                                ],
+                              ),
+                              child: TextField(
+                                controller: searchController,
+                                onChanged: (value) {
+                                  setState(() {
+                                    searchQuery = value;
+                                  });
+                                },
+                                decoration: const InputDecoration(
+                                  hintText: 'Search stories...',
+                                  prefixIcon: Icon(Icons.search),
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            buildContinueReading(),
+                            const SizedBox(height: 20),
+                            buildAnalyticsCard(isWeb),
+                            const SizedBox(height: 24),
+                            const Text(
+                              '🔥 Public Stories',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        ),
+                      ),
+                    ),
 
-                                                return GestureDetector(
-                                                  onTap: () {
-                                                    _toggleLibrary(book);
-                                                  },
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(8),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                    ),
-                                                    child: Icon(
-                                                      isSaved
-                                                          ? Icons.bookmark
-                                                          : Icons
-                                                                .bookmark_border,
-                                                      color: Colors.orange,
-                                                    ),
-                                                  ),
-                                                );
-                                              },
-                                            ),
+                    /// BOOK GRID
+                    filteredDocs.isEmpty
+                        ? const SliverFillRemaining(
+                            child: Center(child: Text('No stories found')),
+                          )
+                        : SliverPadding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            sliver: SliverGrid(
+                              delegate: SliverChildBuilderDelegate((
+                                context,
+                                index,
+                              ) {
+                                final doc = filteredDocs[index];
+                                final book = doc.data() as Map<String, dynamic>;
+                                book['id'] = doc.id;
+                                final episodes =
+                                    book['episodes'] as List? ?? [];
+
+                                return GestureDetector(
+                                  onTap: () {
+                                    if (episodes.isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'This book does not have any chapters yet.',
                                           ),
-                                        ],
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            ChapterScreen(book: book),
                                       ),
+                                    );
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: .05,
+                                          ),
+                                          blurRadius: 15,
+                                        ),
+                                      ],
                                     ),
-
-                                    Padding(
-                                      padding: const EdgeInsets.all(12),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            book['title'] ?? '',
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 15,
-                                            ),
-                                          ),
-
-                                          const SizedBox(height: 4),
-
-                                          Text(
-                                            book['author'] ?? '',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              color: AppColors.textSecondary,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-
-                                          const SizedBox(height: 8),
-
-                                          Row(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Stack(
                                             children: [
-                                              const Icon(
-                                                Icons.menu_book,
-                                                size: 14,
-                                                color: AppColors.primary,
+                                              ClipRRect(
+                                                borderRadius:
+                                                    const BorderRadius.vertical(
+                                                      top: Radius.circular(20),
+                                                    ),
+                                                child: Container(
+                                                  width: double.infinity,
+                                                  color: Colors.grey.shade100,
+                                                  child: Center(
+                                                    child:
+                                                        _buildBuildCoverImageWrapper(
+                                                          book,
+                                                        ),
+                                                  ),
+                                                ),
                                               ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                '${episodes.length} Chapters',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
+                                              Positioned(
+                                                top: 10,
+                                                right: 10,
+                                                child: FutureBuilder<bool>(
+                                                  future:
+                                                      LibraryService.isBookSaved(
+                                                        book['id'],
+                                                      ),
+                                                  builder: (context, snapshot) {
+                                                    final isSaved =
+                                                        snapshot.data ?? false;
+
+                                                    return GestureDetector(
+                                                      onTap: () {
+                                                        _toggleLibrary(book);
+                                                      },
+                                                      child: Container(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              8,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        child: Icon(
+                                                          isSaved
+                                                              ? Icons.bookmark
+                                                              : Icons
+                                                                    .bookmark_border,
+                                                          color: Colors.orange,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(12),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                book['title'] ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                book['author'] ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color:
+                                                      AppColors.textSecondary,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.menu_book,
+                                                    size: 14,
+                                                    color: AppColors.primary,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${episodes.length} Chapters',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }, childCount: filteredDocs.length),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: .50,
-                              ),
-                        ),
-                      ),
+                                  ),
+                                );
+                              }, childCount: filteredDocs.length),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 20)),
-              ],
-            );
-          },
+                              // Dynamically scales columns based on viewport sizing
+                              gridDelegate:
+                                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 220,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                    mainAxisExtent: 270,
+                                  ),
+                            ),
+                          ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
+  }
+
+  Widget _buildBuildCoverImageWrapper(Map<String, dynamic> book) {
+    return _buildCoverImage(book['coverImageUrl']);
   }
 }

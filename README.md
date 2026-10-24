@@ -49,7 +49,7 @@ Make sure you have the following installed:
 **1. Clone the repository**
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
+git clone https://github.com/pavansaireddythota/lucid-pages-flutter.git
 ```
 
 **2. Navigate to the project directory**
